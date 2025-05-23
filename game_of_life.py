@@ -11,6 +11,14 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRID_COLOR = (200, 200, 200)
 BLUE= (0, 0, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+
+input_rect1 = pygame.Rect(695, 555, 200, 40)
+active1 = False
+
+input_rect2 = pygame.Rect(695, 490, 200, 40)
+active2 = False
 
 # Ініціалізація
 pygame.init()
@@ -23,13 +31,19 @@ grid = np.zeros((ROWS, COLS), dtype=int)
 running = False  # Чи йде симуляція
 random_start = False  # Чи заповнювати поле випадково
 time=5
+text_font = pygame.font.Font(None, 24)
 font = pygame.font.Font(None, 36)
-text = font.render(f"{time//5}", True, (255, 0, 0)) #швидкість гри
-text_rect = text.get_rect(center=(890,590)) #росташування
+text = text_font.render(f"Швидкість гри: {time//5}", True, BLACK) #швидкість гри
+text_rect = text.get_rect(center=(800,460)) #росташування
 
-# pause_image=pygame.image.load("Pause.png")
-pause_image=pygame.image.load("play_button.png")
-pygame.transform.scale(pause_image,(1,1))
+pause="Pause.png"
+
+pause_image=pygame.image.load(pause)
+pause_image=pygame.transform.scale(pause_image,(100,80))
+input_text1 = ""
+input_text2 = ""
+text1="Виживання клітини"
+text2="Народження клітинки"
 
 #правила
 SURVIVAL_RULES = {2,3}  # {2,3} При яких сусідах клітина виживає
@@ -88,7 +102,23 @@ running_simulation = True
 while running_simulation:
     draw_grid()
     screen.blit(text, text_rect)
-    screen.blit(pause_image,(100,100))
+    screen.blit(pause_image,(-20,530))
+    color1 = RED if active1 else BLACK
+    color2 = RED if active2 else BLACK
+
+    pygame.draw.rect(screen, color1, input_rect1, 2)
+    pygame.draw.rect(screen, color2, input_rect2, 2)
+
+    text_surface1 = font.render(input_text1, True, BLACK)
+    screen.blit(text_surface1, (input_rect1.x + 10, input_rect1.y + 10))
+
+    text_surface2 = font.render(input_text2, True, BLACK)
+    screen.blit(text_surface2, (input_rect2.x + 10, input_rect2.y + 10))
+
+    text_1 = text_font.render(text1, True, BLACK)
+    screen.blit(text_1, (715, 535))
+    text_2 = text_font.render(text2, True, BLACK)
+    screen.blit(text_2, (705, 470))
     pygame.display.flip()  # Відображення тексту
     
     for event in pygame.event.get():
@@ -96,66 +126,85 @@ while running_simulation:
             running_simulation = False
         
         elif event.type == pygame.MOUSEBUTTONDOWN:# Перемикання клітинки
-            if event.button == 1:
-                mouse_pos = pygame.mouse.get_pos()
-                row, col = get_cell_from_mouse(mouse_pos)
+            if input_rect1.collidepoint(event.pos):
+                active1 = True
+                active2 = False
+            elif input_rect2.collidepoint(event.pos):
+                active2 = True
+                active1 = False
+            else:
+                active1 = False
+                active2 = False
             
-                if 0 <= row < ROWS and 0 <= col < COLS:
-                    if grid[row, col] == 0:
-                        grid[row, col] = 1  # Біле → Чорне
-                    elif grid[row, col] == 1:
-                        grid[row, col] = 0  # Чорне → Біле
-                    elif grid[row, col] == 2:
-                        grid[row, col] = 1  # Синє → Біле
-                    draw_grid()
-                    pygame.display.flip()
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    row, col = get_cell_from_mouse(mouse_pos)
+                
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        if grid[row, col] == 0:
+                            grid[row, col] = 1  # Біле → Чорне
+                        elif grid[row, col] == 1:
+                            grid[row, col] = 0  # Чорне → Біле
+                        elif grid[row, col] == 2:
+                            grid[row, col] = 1  # Синє → Біле
+                        draw_grid()
+                        pygame.display.flip()
 
-            elif event.button == 3:
-                mouse_pos = pygame.mouse.get_pos()
-                row, col = get_cell_from_mouse(mouse_pos)
-            
-                if 0 <= row < ROWS and 0 <= col < COLS:
-                    if grid[row, col] == 0:
-                        grid[row, col] = 2  # Біле → Синє
-                    elif grid[row, col] == 2:
-                        grid[row, col] = 0  # Синє → Біле
-                    elif grid[row, col] == 1:
-                        grid[row, col] = 2  # Чорне → Синє
-                    draw_grid()
-                    pygame.display.flip()
+                elif event.button == 3:
+                    mouse_pos = pygame.mouse.get_pos()
+                    row, col = get_cell_from_mouse(mouse_pos)
+                
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        if grid[row, col] == 0:
+                            grid[row, col] = 2  # Біле → Синє
+                        elif grid[row, col] == 2:
+                            grid[row, col] = 0  # Синє → Біле
+                        elif grid[row, col] == 1:
+                            grid[row, col] = 2  # Чорне → Синє
+                        draw_grid()
+                        pygame.display.flip()
             
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 running = not running  # Запуск/зупинка симуляції
+                if pause=="Pause.png":
+                    pause="play.png"
+                elif pause=="play.png":
+                    pause="Pause.png"
+                pause_image=pygame.image.load(pause)
+                pause_image=pygame.transform.scale(pause_image,(100,80))
             elif event.key == pygame.K_r:
                 grid = np.random.choice([0, 1], size=(ROWS, COLS))  # Рандомне поле
             elif event.key == pygame.K_e:
                 grid = np.zeros((ROWS, COLS), dtype=int)  # Очистити поле
             elif event.key == pygame.K_w and time!=40:
                 time*=2
-                text = font.render(f"{time//5}", True, (255, 0, 0))
+                text = text_font.render(f"Швидкість гри: {time//5}", True, BLACK)
             elif event.key == pygame.K_s and time!= 5:
                 time//=2
-                text = font.render(f"{time//5}", True, (255, 0, 0))
-            elif event.key == pygame.K_1: #звичайний режим
-                SURVIVAL_RULES = {2,3}
-                BIRTH_RULES = {3}
-            elif event.key == pygame.K_2: #візерунок
-                SURVIVAL_RULES = {0,1,2,3,4,5,6,7,8}
-                BIRTH_RULES = {1}
-            elif event.key == pygame.K_3: #візерунок
-                SURVIVAL_RULES = {1,2,3,4}
-                BIRTH_RULES = {1,2}
-            elif event.key == pygame.K_4: #візерунок
-                SURVIVAL_RULES = {1,2,3,4}
-                BIRTH_RULES = {1,2,3}
-            elif event.key == pygame.K_5: #генерація печер
-                SURVIVAL_RULES = {5,6,7,8}
-                BIRTH_RULES = {4,5,6,7,8}
-                grid = np.random.choice([0, 1], size=(ROWS, COLS))
+                text = text_font.render(f"Швидкість гри: {time//5}", True, BLACK)
+        
+            elif active1:
+                if event.key == pygame.K_RETURN:
+                    BIRTH_RULES = set(int(x) for x in input_text1.split(",") if x.strip().isdigit())
+                    input_text1 = ""
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text1 = input_text1[:-1]
+                elif event.unicode.isprintable():
+                    input_text1 += event.unicode
+
+            elif active2:
+                if event.key == pygame.K_RETURN:
+                    SURVIVAL_RULES = set(int(x) for x in input_text2.split(",") if x.strip().isdigit())
+                    input_text2 = ""
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text2 = input_text2[:-1]
+                elif event.unicode.isprintable():
+                    input_text2 += event.unicode
 
     if running:
         update_grid()
         clock.tick(time)
 pygame.quit()
+#pyinstaller --onefile --noconsole game_of_life.py
